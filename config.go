@@ -4,7 +4,8 @@ type ConnnectionConfig struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
-	password string `yaml:"password"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
 	Url      string `yaml:"url"`
 }
 
@@ -20,5 +21,5 @@ type Conections struct {
 
 type DuncanConfig struct {
 	App         ConnnectionConfig `yaml:"app"`
-	Connections ConnnectionConfig `yaml:"connection"`
+	Connections Conections        `yaml:"connections"`
 }
