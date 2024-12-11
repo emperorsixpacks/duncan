@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emperorsixpacks/duncan/routers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -45,7 +46,7 @@ type Duncan struct {
 	host     string
 	port     int
 	server   *http.Server
-	router   *Router
+	router   *routers.Router
 	template *template.Template
 }
 
@@ -68,7 +69,7 @@ func (this *Duncan) getServerAddress() string {
 	return fmt.Sprintf("%v:%v", this.host, this.port)
 }
 
-func (this *Duncan) AddRouter(router *Router) {
+func (this *Duncan) AddRouter(router *routers.Router) {
 	this.router = router
 }
 
@@ -142,7 +143,7 @@ func (this Duncan) RenderHtml(w http.ResponseWriter, name string, data interface
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
-		Handler:      this.router.r,
+		Handler:      this.router.R,
 		Addr:         this.getServerAddress(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,

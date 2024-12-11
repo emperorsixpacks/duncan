@@ -1,4 +1,4 @@
-package duncan
+package routers 
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 )
 
 type Router struct {
-	r *mux.Router
+	R *mux.Router
 }
 
 // TODO look into the http.handler interface, I do not like passing this functions up and dan like this
@@ -17,26 +17,26 @@ type Router struct {
 // TODO add redirects handlers
 
 func (this Router) GET(pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods("GET")
+	this.R.HandleFunc(pattern, handler).Methods("GET")
 }
 
 func (this Router) POST(pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods("POST")
+	this.R.HandleFunc(pattern, handler).Methods("POST")
 }
 func (this Router) PUT(pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods("PUT")
+	this.R.HandleFunc(pattern, handler).Methods("PUT")
 }
 func (this Router) DELETE(pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods("DELETE")
+	this.R.HandleFunc(pattern, handler).Methods("DELETE")
 }
 func (this Router) AddMethod(request_method []string, pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods(request_method...)
+	this.R.HandleFunc(pattern, handler).Methods(request_method...)
 }
 
 func (this *Router) GetHandler() *mux.Router {
-	return this.r
+	return this.R
 }
 
 func NewRouter() *Router {
-	return &Router{r: mux.NewRouter()}
+	return &Router{R: mux.NewRouter()}
 }

@@ -11,13 +11,9 @@ import (
 
 var baseDB *gorm.DB
 
-type Connection interface {
-	GetConnectionName() string
-	ConnectionString() string
-}
 
 func getConnection(conn ...Connection) (*gorm.DB, error) {
-	if baseDB == nil {
+  if baseDB == nil {
 		if len(conn) == 0 {
 			return nil, errors.New("Could not establish connection")
 		}

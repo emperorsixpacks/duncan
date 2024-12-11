@@ -1,17 +1,19 @@
-package duncan
+package cache
 
 import (
 	"os"
 	"testing"
+
+	"github.com/emperorsixpacks/duncan"
 )
 
 var (
-	invalid_connection = RedisConnetion{
+	invalid_connection = duncan.RedisConnetion{
 		Addr:     "localhost:6378",
 		Password: "",
 		DB:       1,
 	}
-	valid_connection = RedisConnetion{
+	valid_connection = duncan.RedisConnetion{
 		Addr:     "localhost:6379",
 		Password: "",
 		DB:       1,
