@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emperorsixpacks/duncan/routers"
+	"gopkg.in/yaml.v3"
 )
 
 const DEFAULT_PORT = 5000
@@ -134,9 +135,11 @@ func (this *Duncan) initHTTPserver() {
 }
 
 func NewFromConfig(configPath string) error {
+	var duncanConfig DuncanConfig
 	err := validPath(configPath)
-	file, err := loadConfig(configPath)
-	_, err = ymltoMap(file)
+	config, err := loadConfig(configPath)
+  err = yaml.Unmarshal(config, &duncanConfig)
+  fmt.Println(duncanConfig)
 	if err != nil {
 		return err
 	}

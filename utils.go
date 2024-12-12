@@ -17,10 +17,12 @@ func validPath(configPath string) error {
 }
 func loadConfig(filePath string) ([]byte, error) {
 	file, err := os.ReadFile(filePath)
+	config, err := ymltoMap(file)
+	newConfig, err := yaml.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
+	return newConfig, nil
 }
 
 func ymltoMap(file []byte) (map[string]interface{}, error) {
