@@ -57,6 +57,7 @@ func resolveConfig(config *interface{}) error {
 	return nil
 }
 
+// TODO still not comfortable with this 
 func resolveConfigVars(config interface{}) (interface{}, error) {
 	MapConfig, err := validMapping(config)
 	if err != nil {
