@@ -2,7 +2,6 @@ package duncan
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 
@@ -55,9 +54,19 @@ func resolveConnectionConfig(config map[string]interface{}) map[string]interface
 	return config
 }
 
+func resolveConfigVars(config map[string]interface{}) map[string]interface{} {
+	for k, v := range config {
+		if str, ok := v.(string); ok {
+			config[k] = resolveEnv(str)
+		}
+	}
+	return config
+}
+
 func resolveEnv(value string) string {
 	return os.Getenv(resolvePlaceHolder(value))
 }
+
 func resolvePlaceHolder(value string) string {
 	if strings.Contains(value, "${") {
 		last_index := len(value) - 1
@@ -66,12 +75,4 @@ func resolvePlaceHolder(value string) string {
 		return env_value
 	}
 	return value
-}
-func resolveConfigVars(config map[string]interface{}) map[string]interface{} {
-	for k, v := range config {
-		if str, ok := v.(string); ok {
-			config[k] = resolveEnv(str)
-		}
-	}
-	return config
 }

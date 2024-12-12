@@ -134,15 +134,10 @@ func (this *Duncan) initHTTPserver() {
 }
 
 func NewFromConfig(configPath string) error {
-	if err := validPath(configPath); err != nil {
-		return nil
-	}
+	err := validPath(configPath)
 	file, err := loadConfig(configPath)
-	if err != nil {
-		return err
-	}
 	_, err = ymltoMap(file)
-	if err!= nil {
+	if err != nil {
 		return err
 	}
 	return nil
