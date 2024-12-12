@@ -5,7 +5,7 @@ import (
 )
 
 func TestLoadfromfile(t *testing.T){
-  err := NewFromConfig("./duncan_config.yml")
+  err := NewFromConfig("./duncan-config.yml")
   if err != nil{
     t.Error(err)
   }

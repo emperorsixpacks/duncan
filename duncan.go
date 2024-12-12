@@ -141,9 +141,8 @@ func NewFromConfig(configPath string) error {
 	if err != nil {
 		return err
 	}
-	o, err := ymltoMap(file)
-	fmt.Println(o)
-	if err != nil {
+	_, err = ymltoMap(file)
+	if err!= nil {
 		return err
 	}
 	return nil
