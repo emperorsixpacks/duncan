@@ -9,14 +9,9 @@ type ConnnectionConfig struct {
 	Url      string `yaml:"url"`
 }
 
-type DatabaseConfig struct {
-	Master ConnnectionConfig `yaml:"master"`
-	Slave  ConnnectionConfig `yaml:"slave"`
-}
-
 type Conections struct {
 	Redis    ConnnectionConfig `yaml:"redis"`
-	Database DatabaseConfig    `yaml:"database"`
+	Database ConnnectionConfig `yaml:"database"`
 }
 
 type DuncanConfig struct {

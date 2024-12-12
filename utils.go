@@ -27,11 +27,10 @@ func loadConfig(filePath string) ([]byte, error) {
 func ymltoMap(file []byte) (map[string]interface{}, error) {
 	var duncanConfig map[string]interface{}
 	err := yaml.Unmarshal(file, &duncanConfig)
-	resolveConfig(&duncanConfig)
+	err = resolveConfig(&duncanConfig)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(duncanConfig)
 	return duncanConfig, nil
 }
 
@@ -48,18 +47,11 @@ func resolveConfig(config *map[string]interface{}) error {
 }
 
 func resolveConnectionConfig(config map[string]interface{}) map[string]interface{} {
-	redis_config := config["redis"].(map[string]interface{})
-	database := config["database"].(map[string]interface{})
-	config["redis"] = resolveConfigVars(redis_config)
-	config["database"] = resolveDatabseConnnection(database)
-	return config
-}
-
-func resolveDatabseConnnection(config map[string]interface{}) map[string]interface{} {
-	master := config["master"].(map[string]interface{})
-	// slave := config["master"].(map[string]interface{})
-	config["master"] = resolveConfigVars(master)
-	// config["slave"] = resolveConfigVars(slave)
+	for k, v := range config {
+		if innerKey, ok := v.(map[string]interface{}); ok {
+			config[k] = resolveConfigVars(innerKey)
+		}
+	}
 	return config
 }
 
