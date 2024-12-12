@@ -139,7 +139,6 @@ func NewFromConfig(configPath string) error {
 	err := validPath(configPath)
 	config, err := loadConfig(configPath)
   err = yaml.Unmarshal(config, &duncanConfig)
-  fmt.Println(duncanConfig)
 	if err != nil {
 		return err
 	}

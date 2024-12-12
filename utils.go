@@ -2,11 +2,20 @@ package duncan
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+func validMapping(in interface{}) (map[string]interface{}, bool) {
+	comma, ok := in.(map[string]interface{})
+	if !ok {
+		return nil, false
+	}
+	return comma, true
+}
 
 func validPath(configPath string) error {
 	_, err := os.Stat(configPath)
@@ -25,44 +34,39 @@ func loadConfig(filePath string) ([]byte, error) {
 	return newConfig, nil
 }
 
-func ymltoMap(file []byte) (map[string]interface{}, error) {
-	var duncanConfig map[string]interface{}
+func ymltoMap(file []byte) (interface{}, error) {
+	var duncanConfig interface{}
 	err := yaml.Unmarshal(file, &duncanConfig)
 	err = resolveConfig(&duncanConfig)
+	fmt.Println(duncanConfig)
 	if err != nil {
 		return nil, err
 	}
 	return duncanConfig, nil
 }
 
-func resolveConfig(config *map[string]interface{}) error {
-	app_config, ok := (*config)["app"].(map[string]interface{})
-	connection_config, ok := (*config)["connections"].(map[string]interface{})
-	if !ok {
-		return errors.New("Invalid Config")
+func resolveConfig(config *interface{}) error {
+	MapConfig, err := validMapping((*config))
+	for k, v := range MapConfig {
+		MapConfig[k] = resolveConfigVars(v)
 	}
-	(*config)["app"] = resolveConfigVars(app_config)
-	(*config)["connections"] = resolveConnectionConfig(connection_config)
+	if !err {
+		return errors.New("Invalid Config file")
+	}
 
 	return nil
 }
 
-func resolveConnectionConfig(config map[string]interface{}) map[string]interface{} {
-	for k, v := range config {
-		if innerKey, ok := v.(map[string]interface{}); ok {
-			config[k] = resolveConfigVars(innerKey)
-		}
-	}
-	return config
-}
-
-func resolveConfigVars(config map[string]interface{}) map[string]interface{} {
-	for k, v := range config {
+func resolveConfigVars(config interface{}) interface{} {
+	MapConfig, _ := validMapping(config)
+	for k, v := range MapConfig {
 		if str, ok := v.(string); ok {
-			config[k] = resolvePlaceHolder(str)
+			MapConfig[k] = resolvePlaceHolder(str)
+			continue
 		}
+		MapConfig[k] = resolveConfigVars(v)
 	}
-	return config
+	return config // MapConfig is a reference to config
 }
 
 func resolvePlaceHolder(value string) string {
