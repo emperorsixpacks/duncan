@@ -59,14 +59,10 @@ func resolveConnectionConfig(config map[string]interface{}) map[string]interface
 func resolveConfigVars(config map[string]interface{}) map[string]interface{} {
 	for k, v := range config {
 		if str, ok := v.(string); ok {
-			config[k] = resolveEnv(str)
+			config[k] = resolvePlaceHolder(str)
 		}
 	}
 	return config
-}
-
-func resolveEnv(value string) string {
-	return os.Getenv(resolvePlaceHolder(value))
 }
 
 func resolvePlaceHolder(value string) string {
@@ -74,7 +70,7 @@ func resolvePlaceHolder(value string) string {
 		last_index := len(value) - 1
 		first_index := 2
 		env_value := value[first_index:last_index]
-		return env_value
+		return os.Getenv(env_value)
 	}
 	return value
 }
