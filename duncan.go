@@ -32,6 +32,7 @@ type Duncan struct {
 	server   *http.Server
 	router   *routers.Router
 	template *template.Template
+  middlewares []MiddleWare
 }
 
 func (this *Duncan) Start() {
@@ -127,7 +128,7 @@ func (this Duncan) RenderHtml(w http.ResponseWriter, name string, data interface
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
-		Handler:      this.router.R,
+		Handler:      this.router.GetHandler(),
 		Addr:         this.getServerAddress(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -138,7 +139,7 @@ func NewFromConfig(configPath string) error {
 	var duncanConfig DuncanConfig
 	err := validPath(configPath)
 	config, err := loadConfig(configPath)
-  err = yaml.Unmarshal(config, &duncanConfig)
+	err = yaml.Unmarshal(config, &duncanConfig)
 	if err != nil {
 		return err
 	}
