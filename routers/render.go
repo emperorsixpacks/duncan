@@ -1,7 +1,7 @@
-package duncan
+package routers
 
 import (
-  "html/template"
+	"html/template"
 	"net/http"
 )
 
@@ -18,9 +18,9 @@ type HTML struct {
 	Template *template.Template
 }
 
-func (this HTML) Render(w http.ResponseWriter) error {
-	return this.Template.ExecuteTemplate(w, this.Name, this.Data)
-
+// this will be called from requests, like do r.Render
+func (this HTML) Render(w http.ResponseWriter, t string, data interface{}) error {
+	return this.Template.ExecuteTemplate(w, t, data)
 }
 
 // Now we need to create functions and methods to load the passd html
