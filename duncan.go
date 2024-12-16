@@ -54,7 +54,6 @@ func (this *Duncan) AddRouter(router *routers.Router) {
 	this.router = router
 }
 
-
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
 		Handler:      this.router.GetHandler(),
