@@ -54,13 +54,6 @@ func (this *Duncan) AddRouter(router *routers.Router) {
 	this.router = router
 }
 
-func (this Duncan) RenderHtml(w http.ResponseWriter, name string, data interface{}) error {
-	err := this.template.ExecuteTemplate(w, name, data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{

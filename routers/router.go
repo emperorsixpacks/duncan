@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -19,17 +20,24 @@ type Router struct {
 // TODO look into adding a context manger so we do not have to pass (res http.ResponseWriter, req *http.Request) all the time
 // TODO add redirects handlers
 
-func (this Router) AddMethod(request_method []string, pattern string, handler func(res http.ResponseWriter, req *http.Request)) {
-	this.r.HandleFunc(pattern, handler).Methods(request_method...)
+// We need to fix this so that we can return a request type
+func (this Router) AddMethod(request_method []string, pattern string, handler func(*http.Request) error) {
+	innerHandler := func(w http.ResponseWriter, r *http.Request) {
+		if err := handler(r); err != nil {
+			fmt.Println("Could not connect")
+		}
+		fmt.Println("connect")
+
+	}
+	this.r.HandleFunc(pattern, innerHandler).Methods(request_method...)
 }
 func (this Router) RenderHtml(t string, data interface{}) error {
 
 	return this.template.Render(this.Writer, t, data)
 }
 
-
-func (this Router) handle(p string, m string) {
-	this.r.Handle(p).Methods(m)
+func (this Router) SubRouter(prefix string) *Router {
+	this.r.PathPrefix(prefix).Subrouter()
 }
 
 func (this *Router) GetHandler() *mux.Router {
@@ -40,3 +48,12 @@ func NewRouter() *Router {
 	return &Router{r: mux.NewRouter()}
 }
 
+/*
+func MyHandler(r *Request) error {
+  return r.RenderHTML("index.html", context)
+}
+
+router.AddHandler("/", MyHandler)
+
+func AddHandler(path string, handler){}
+*/

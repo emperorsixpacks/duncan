@@ -46,6 +46,7 @@ func (this *HTML) findTemplates(cleanRoot string) (int, []string, error) {
 	})
 	return last_index, html_files, err
 }
+
 func (this *HTML) parseTemplatetoRoot(rootTemplate *template.Template, name string, html_path string) error {
 	new_template := rootTemplate.New(name)
 	html_file, err := os.ReadFile(html_path)
