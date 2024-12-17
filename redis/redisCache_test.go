@@ -51,28 +51,29 @@ func TestValidConnection(t *testing.T) {
 
 func TestGetJSON(t *testing.T) {
 	var someData testStruct
-	err := redisClient.GetJSON("user", &someData)
+	err := redisClient.GetJSON("user", 0, &someData)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSetJSON(t *testing.T) {
-	err := redisClient.SetJSON("user", testData)
+	err := redisClient.SetJSON("user", 0, testData)
 	if err != nil {
 		t.Error(err)
 	}
 }
+
 /*
-func TestUpdateJSON(t *testing.T) {
-	err := redisClient.UpdateJSON("user", []string{"a", "name"}, "Andrew")
-	if err != nil {
-		t.Error(err)
+	func TestUpdateJSON(t *testing.T) {
+		err := redisClient.UpdateJSON("user", []string{"a", "name"}, "Andrew")
+		if err != nil {
+			t.Error(err)
+		}
 	}
-}
 */
 func TestDeleteJSON(t *testing.T) {
-	err := redisClient.DeleteJSON("user", testData)
+	err := redisClient.DeleteJSON("user",0, testData)
 	if err != nil {
 		t.Error(err)
 	}

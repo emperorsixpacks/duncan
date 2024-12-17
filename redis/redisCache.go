@@ -25,7 +25,7 @@ func mapToStruct(i interface{}, o *interface{}) error {
 }
 func returnJSONKey(key KeyPath) (string, error) {
 	if itm, ok := key.(int); ok {
-		if itm == 1 {
+		if itm == 0 {
 			key = []string{"$"}
 		}
 	}
@@ -33,7 +33,8 @@ func returnJSONKey(key KeyPath) (string, error) {
 		return strings.Join(str, "."), nil
 	}
 	// log and crash server
-	return "", errors.New("error")
+  message := fmt.Sprintf("Invalid Key:%v", key)
+	return "", errors.New(message)
 
 }
 
@@ -71,7 +72,10 @@ func (this RedisClient) GetJSON(item string, k KeyPath, o interface{}) error {
 
 // this is a low level method, from here, we can perform things like deleting a single key or updating a single key
 func (this RedisClient) getJSON(item string, key KeyPath) (interface{}, error) {
-	_key := returnJSONKey(key)
+	_key, err := returnJSONKey(key)
+	if err != nil {
+		return nil, err
+	}
 	val, err := this.rdb.JSONGet(ctx, item, _key).Expanded()
 	if err != nil {
 		return nil, err
@@ -96,7 +100,10 @@ func (this RedisClient) setJSON(item string, key KeyPath, value interface{}) err
 		return err
 	}
 	// TODO put this into a function
-	_key := returnJSONKey(key)
+	_key, err := returnJSONKey(key)
+	if err != nil {
+		return err
+	}
 	err = this.rdb.JSONSet(ctx, item, _key, val).Err()
 	if err != nil {
 		fmt.Println(err)
@@ -106,8 +113,12 @@ func (this RedisClient) setJSON(item string, key KeyPath, value interface{}) err
 }
 
 // Keeing it like this for now, later if needed we may need to go into nested objets to delete specific keys, but that should be from the client
-func (this RedisClient) DeleteJSON(key string, value interface{}) error {
-	err := this.rdb.JSONDel(ctx, key, "$").Err()
+func (this RedisClient) DeleteJSON(item string, key KeyPath, value interface{}) error {
+	_key, err := returnJSONKey(key)
+	if err != nil {
+		return err
+	}
+	err = this.rdb.JSONDel(ctx, item, _key).Err()
 	if err != nil {
 		// log error here
 		return err
@@ -117,7 +128,7 @@ func (this RedisClient) DeleteJSON(key string, value interface{}) error {
 }
 
 func (this RedisClient) UpdateJSON(item string, key []string, value interface{}) {
-	data := this.setJSON(item, key, value) // Keep this for now, later, we should be able to pass the inner key
+	this.setJSON(item, key, value) // Keep this for now, later, we should be able to pass the inner key
 }
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
