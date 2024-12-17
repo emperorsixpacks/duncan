@@ -56,7 +56,7 @@ func (this *Duncan) AddRouter(router *routers.Router) {
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
-		Handler:      this.router.GetHandler(),
+//		Handler:      this.router.GetHandler(),
 		Addr:         this.getServerAddress(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
