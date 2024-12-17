@@ -1,4 +1,4 @@
-package cache
+package redis 
 
 import (
 	"os"
@@ -18,7 +18,7 @@ var (
 		Password: "",
 		DB:       1,
 	}
-	redisClient, _ = NewRedisclient(valid_connection)
+	redisClient, _ = New(valid_connection)
 	testData       = testStruct{
 		A: testInnerStruct{Name: "Andrew"},
 		B: "tomi",
@@ -36,25 +36,25 @@ type testStruct struct {
 
 func TestInvalidConnection(t *testing.T) {
 	os.Stdout, _ = os.Open(os.DevNull)
-	_, err := NewRedisclient(invalid_connection)
+	_, err := New(invalid_connection)
 	if err == nil {
 		t.Error("Testing invalid connection failed")
 	}
 }
 
 func TestValidConnection(t *testing.T) {
-	_, err := NewRedisclient(valid_connection)
+	_, err := New(valid_connection)
 	if err != nil {
 		t.Error("Testing valid connection failed")
 	}
 }
 
-func TestGetJSON(t *testing.T){
-  var someData testStruct
-  err := redisClient.GetJSON("user", &someData)
-  if err != nil{
-    t.Error(err)
-  }
+func TestGetJSON(t *testing.T) {
+	var someData testStruct
+	err := redisClient.GetJSON("user", &someData)
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSetJSON(t *testing.T) {
@@ -63,3 +63,9 @@ func TestSetJSON(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestDeleteJSON(t *testing.T) {
+	err := redisClient.DeleteJSON("user", testData)
+	if err != nil {
+		t.Error(err)
+	}
+} 

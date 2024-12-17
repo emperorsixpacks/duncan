@@ -1,4 +1,4 @@
-package cache
+package redis 
 
 import (
 	"context"
@@ -80,6 +80,7 @@ func (this RedisClient) setJSON(key string, value interface{}, inner_key ...stri
 	if err != nil {
 		return err
 	}
+	// TODO put this into a function
 	if len(inner_key) == 0 {
 		inner_key = []string{"$"}
 	}
@@ -90,11 +91,22 @@ func (this RedisClient) setJSON(key string, value interface{}, inner_key ...stri
 	}
 	return nil
 }
-func (this RedisClient) DeleteJSON(key string, value interface{}) {}
+
+// Keeing it like this for now, later if needed we may need to go into nested objets to delete specific keys, but that should be from the client
+func (this RedisClient) DeleteJSON(key string, value interface{}) error {
+	err := this.rdb.JSONDel(ctx, key, "$").Err()
+	if err != nil {
+		// log error here
+		return err
+	}
+	// log here
+	return nil
+}
 func (this RedisClient) UpdateJSON(key string, value interface{}) {}
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
 // We can use an interface here something like duncan.cache, but that should be later
+// Fix null pointer error
 func New(conn duncan.RedisConnetion) (*RedisClient, error) {
 	newClient := new(RedisClient)
 	options := &redis.Options{
