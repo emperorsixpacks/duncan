@@ -11,6 +11,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var duncan *Duncan
+
 const DEFAULT_PORT = 5000
 const DEFAULT_HOST = "127.0.0.1"
 
@@ -18,13 +20,13 @@ type Context map[string]any
 type RedisConnetion struct {
 	Addr     string
 	Password string
-	DB       int
+	DB       uint
 }
 
 type Duncan struct {
-	name        string
-	host        string
-	port        int
+	Name        string
+	Host        string
+	Port        uint
 	server      *http.Server
 	router      *routers.Router
 	template    *template.Template
@@ -47,7 +49,7 @@ func (this *Duncan) Stop() {
 }
 
 func (this *Duncan) getServerAddress() string {
-	return fmt.Sprintf("%v:%v", this.host, this.port)
+	return fmt.Sprintf("%v:%v", this.Host, this.Port)
 }
 
 func (this *Duncan) AddRouter(router *routers.Router) {
@@ -56,30 +58,42 @@ func (this *Duncan) AddRouter(router *routers.Router) {
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
-//		Handler:      this.router.GetHandler(),
+		//		Handler:      this.router.GetHandler(),
 		Addr:         this.getServerAddress(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
 }
 
-func NewFromConfig(configPath string) error {
-	var duncanConfig DuncanConfig
-	err := validPath(configPath)
-	config, err := loadConfig(configPath)
-	err = yaml.Unmarshal(config, &duncanConfig)
-	if err != nil {
-		return err
+func FromConfig(configPath string) (*Duncan, error) {
+	if duncan == nil {
+		var duncanConfig DuncanConfig
+		err := validPath(configPath)
+		config, err := loadConfig(configPath)
+		err = yaml.Unmarshal(config, &duncanConfig)
+		if err != nil {
+			return nil, err
+		}
+		newDuncan(duncanConfig)
 	}
-	return nil
+	return duncan, nil
 }
 
 func Defualt() *Duncan {
 	return &Duncan{
-		name: "MeetUps Guru",
-		host: DEFAULT_HOST,
-		port: DEFAULT_PORT,
+		Name: "MeetUps Guru",
+		Host: DEFAULT_HOST,
+		Port: DEFAULT_PORT,
 	}
+}
+
+func newDuncan(config DuncanConfig) error {
+	duncan = &Duncan{
+		Name: config.App.Name,
+		Host: config.App.Host,
+		Port: config.App.Port,
+	}
+	return nil
 }
 
 // TODO do not know if it will work, but how about using factory here

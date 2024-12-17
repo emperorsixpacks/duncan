@@ -3,7 +3,7 @@ package duncan
 type ConnnectionConfig struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
+	Port     uint   `yaml:"port"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Url      string `yaml:"url"`
