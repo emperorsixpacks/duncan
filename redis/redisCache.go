@@ -93,7 +93,7 @@ func (this RedisClient) DeleteJSON(key string, value interface{}) {}
 func (this RedisClient) UpdateJSON(key string, value interface{}) {}
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
-func NewRedisclient(conn duncan.RedisConnetion) (*RedisClient, error) {
+func New(conn duncan.RedisConnetion) (*RedisClient, error) {
 	newClient := new(RedisClient)
 	options := &redis.Options{
 		Addr:     conn.Addr,
