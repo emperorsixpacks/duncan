@@ -61,14 +61,13 @@ func TestGetJSON(t *testing.T) {
 	}
 }
 
-/*
-	func TestUpdateJSON(t *testing.T) {
-		err := redisClient.UpdateJSON("user", []string{"a", "name"}, "Andrew")
-		if err != nil {
-			t.Error(err)
-		}
+func TestUpdateJSON(t *testing.T) {
+	err := redisClient.SetJSON("user", []string{"a", "name"}, "Tomi")
+	if err != nil {
+		t.Error(err)
 	}
-*/
+}
+
 func TestDeleteJSON(t *testing.T) {
 	err := redisClient.DeleteJSON("user", 0, testData)
 	if err != nil {

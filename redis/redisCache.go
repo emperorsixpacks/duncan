@@ -33,7 +33,7 @@ func returnJSONKey(key KeyPath) (string, error) {
 		return strings.Join(str, "."), nil
 	}
 	// log and crash server
-  message := fmt.Sprintf("Invalid Key:%v", key)
+	message := fmt.Sprintf("Invalid Key:%v", key)
 	return "", errors.New(message)
 
 }
@@ -125,10 +125,6 @@ func (this RedisClient) DeleteJSON(item string, key KeyPath, value interface{}) 
 	}
 	// log here
 	return nil
-}
-
-func (this RedisClient) UpdateJSON(item string, key []string, value interface{}) {
-	this.setJSON(item, key, value) // Keep this for now, later, we should be able to pass the inner key
 }
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
