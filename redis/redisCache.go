@@ -11,6 +11,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type KeyPath interface{}
+
 func mapToStruct(i interface{}, o *interface{}) error {
 	newStrVal, err := json.Marshal(i)
 	if err != nil {
@@ -21,11 +23,18 @@ func mapToStruct(i interface{}, o *interface{}) error {
 	}
 	return nil
 }
-func returnJSONKey(key []string) string {
-	if len(key) == 1 {
-		key = []string{"$"}
+func returnJSONKey(key KeyPath) (string, error) {
+	if itm, ok := key.(int); ok {
+		if itm == 1 {
+			key = []string{"$"}
+		}
 	}
-	return strings.Join(key, ".")
+	if str, ok := key.([]string); ok {
+		return strings.Join(str, "."), nil
+	}
+	// log and crash server
+	return "", errors.New("error")
+
 }
 
 var ctx = context.Background() // I do not know, should I put this in the struct
@@ -43,7 +52,7 @@ func (this *RedisClient) clearDB() error {
 }
 
 // TODO try to make this simpler
-func (this RedisClient) GetJSON(item string, k []string, o interface{}) error {
+func (this RedisClient) GetJSON(item string, k KeyPath, o interface{}) error {
 	// NOTE this works
 	val, err := this.getJSON(item, k)
 	if err != nil {
@@ -61,7 +70,7 @@ func (this RedisClient) GetJSON(item string, k []string, o interface{}) error {
 }
 
 // this is a low level method, from here, we can perform things like deleting a single key or updating a single key
-func (this RedisClient) getJSON(item string, key []string) (interface{}, error) {
+func (this RedisClient) getJSON(item string, key KeyPath) (interface{}, error) {
 	_key := returnJSONKey(key)
 	val, err := this.rdb.JSONGet(ctx, item, _key).Expanded()
 	if err != nil {
@@ -72,7 +81,7 @@ func (this RedisClient) getJSON(item string, key []string) (interface{}, error) 
 
 // we can even expand this further to get the data in a nestad json
 // let us go ahead now and create some hidden methods to handle this
-func (this RedisClient) SetJSON(item string, key []string, value interface{}) error {
+func (this RedisClient) SetJSON(item string, key KeyPath, value interface{}) error {
 	if err := this.setJSON(item, key, value); err != nil {
 		return err
 	}
@@ -81,7 +90,7 @@ func (this RedisClient) SetJSON(item string, key []string, value interface{}) er
 }
 
 // TODO look into making some of thise public
-func (this RedisClient) setJSON(item string, key []string, value interface{}) error {
+func (this RedisClient) setJSON(item string, key KeyPath, value interface{}) error {
 	val, err := json.Marshal(value)
 	if err != nil {
 		return err
