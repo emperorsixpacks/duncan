@@ -53,6 +53,7 @@ func (this RedisClient) GetJSON(k string, o interface{}) error {
 	return nil
 }
 
+// this is a low level method, from here, we can perform things like deleting a single key or updating a single key
 func (this RedisClient) getJSON(k string, inner_key ...string) (interface{}, error) {
 	if len(inner_key) == 0 {
 		inner_key = []string{"$"}
@@ -93,6 +94,7 @@ func (this RedisClient) DeleteJSON(key string, value interface{}) {}
 func (this RedisClient) UpdateJSON(key string, value interface{}) {}
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
+// We can use an interface here something like duncan.cache, but that should be later
 func New(conn duncan.RedisConnetion) (*RedisClient, error) {
 	newClient := new(RedisClient)
 	options := &redis.Options{
