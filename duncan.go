@@ -13,20 +13,20 @@ import (
 
 var duncan *Duncan
 
-const DEFAULT_PORT = 5000
+const DEFAULT_PORT = "5000" // NOTE this should be a unit, unable to unmartal from env
 const DEFAULT_HOST = "127.0.0.1"
 
 type Context map[string]any
 type RedisConnetion struct {
 	Addr     string
 	Password string
-	DB       uint
+	DB       string
 }
 
 type Duncan struct {
 	Name        string
 	Host        string
-	Port        uint
+	Port        string
 	server      *http.Server
 	router      *routers.Router
 	template    *template.Template
@@ -97,3 +97,4 @@ func newDuncan(config DuncanConfig) error {
 }
 
 // TODO do not know if it will work, but how about using factory here
+// TODO uint unmartial fail, from str port
