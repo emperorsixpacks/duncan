@@ -1,10 +1,11 @@
-package redis 
+package redis
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emperorsixpacks/duncan"
 	"github.com/redis/go-redis/v9"
@@ -19,6 +20,12 @@ func mapToStruct(i interface{}, o *interface{}) error {
 		return err
 	}
 	return nil
+}
+func returnJSONKey(key []string) string {
+	if len(key) == 1 {
+		key = []string{"$"}
+	}
+	return strings.Join(key, ".")
 }
 
 var ctx = context.Background() // I do not know, should I put this in the struct
@@ -36,9 +43,9 @@ func (this *RedisClient) clearDB() error {
 }
 
 // TODO try to make this simpler
-func (this RedisClient) GetJSON(k string, o interface{}) error {
+func (this RedisClient) GetJSON(item string, k []string, o interface{}) error {
 	// NOTE this works
-	val, err := this.getJSON(k)
+	val, err := this.getJSON(item, k)
 	if err != nil {
 		return err
 	}
@@ -54,11 +61,9 @@ func (this RedisClient) GetJSON(k string, o interface{}) error {
 }
 
 // this is a low level method, from here, we can perform things like deleting a single key or updating a single key
-func (this RedisClient) getJSON(k string, inner_key ...string) (interface{}, error) {
-	if len(inner_key) == 0 {
-		inner_key = []string{"$"}
-	}
-	val, err := this.rdb.JSONGet(ctx, k, inner_key[0]).Expanded()
+func (this RedisClient) getJSON(item string, key []string) (interface{}, error) {
+	_key := returnJSONKey(key)
+	val, err := this.rdb.JSONGet(ctx, item, _key).Expanded()
 	if err != nil {
 		return nil, err
 	}
@@ -67,24 +72,23 @@ func (this RedisClient) getJSON(k string, inner_key ...string) (interface{}, err
 
 // we can even expand this further to get the data in a nestad json
 // let us go ahead now and create some hidden methods to handle this
-func (this RedisClient) SetJSON(key string, value interface{}) error {
-	if err := this.setJSON(key, value); err != nil {
+func (this RedisClient) SetJSON(item string, key []string, value interface{}) error {
+	if err := this.setJSON(item, key, value); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (this RedisClient) setJSON(key string, value interface{}, inner_key ...string) error {
+// TODO look into making some of thise public
+func (this RedisClient) setJSON(item string, key []string, value interface{}) error {
 	val, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 	// TODO put this into a function
-	if len(inner_key) == 0 {
-		inner_key = []string{"$"}
-	}
-	err = this.rdb.JSONSet(ctx, key, inner_key[0], val).Err()
+	_key := returnJSONKey(key)
+	err = this.rdb.JSONSet(ctx, item, _key, val).Err()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -102,7 +106,10 @@ func (this RedisClient) DeleteJSON(key string, value interface{}) error {
 	// log here
 	return nil
 }
-func (this RedisClient) UpdateJSON(key string, value interface{}) {}
+
+func (this RedisClient) UpdateJSON(item string, key []string, value interface{}) {
+	data := this.setJSON(item, key, value) // Keep this for now, later, we should be able to pass the inner key
+}
 
 // this should be private, and later, we should have only getconnection, var, should com from duncan config
 // We can use an interface here something like duncan.cache, but that should be later

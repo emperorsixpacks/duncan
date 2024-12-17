@@ -1,4 +1,4 @@
-package redis 
+package redis
 
 import (
 	"os"
@@ -63,9 +63,15 @@ func TestSetJSON(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestUpdateJSON(t *testing.T) {
+	err := redisClient.UpdateJSON("user", []string{"a", "name"}, "Andrew")
+	if err != nil {
+		t.Error(err)
+	}
+}
 func TestDeleteJSON(t *testing.T) {
 	err := redisClient.DeleteJSON("user", testData)
 	if err != nil {
 		t.Error(err)
 	}
-} 
+}
