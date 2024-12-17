@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"os"
 	"testing"
 
 	"github.com/emperorsixpacks/duncan"
@@ -35,7 +34,7 @@ type testStruct struct {
 }
 
 func TestInvalidConnection(t *testing.T) {
-	os.Stdout, _ = os.Open(os.DevNull)
+	//os.Stdout, _ = os.Open(os.DevNull)
 	_, err := New(invalid_connection)
 	if err == nil {
 		t.Error("Testing invalid connection failed")
@@ -48,17 +47,15 @@ func TestValidConnection(t *testing.T) {
 		t.Error("Testing valid connection failed")
 	}
 }
-
-func TestGetJSON(t *testing.T) {
-	var someData testStruct
-	err := redisClient.GetJSON("user", 0, &someData)
+func TestSetJSON(t *testing.T) {
+	err := redisClient.SetJSON("user", 0, testData)
 	if err != nil {
 		t.Error(err)
 	}
 }
-
-func TestSetJSON(t *testing.T) {
-	err := redisClient.SetJSON("user", 0, testData)
+func TestGetJSON(t *testing.T) {
+	var someData testStruct
+	err := redisClient.GetJSON("user", 0, &someData)
 	if err != nil {
 		t.Error(err)
 	}
@@ -73,7 +70,7 @@ func TestSetJSON(t *testing.T) {
 	}
 */
 func TestDeleteJSON(t *testing.T) {
-	err := redisClient.DeleteJSON("user",0, testData)
+	err := redisClient.DeleteJSON("user", 0, testData)
 	if err != nil {
 		t.Error(err)
 	}
