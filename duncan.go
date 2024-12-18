@@ -13,8 +13,17 @@ import (
 
 var duncan *Duncan
 
+// TODO get dir name and use as default name
 const DEFAULT_PORT = "5000" // NOTE this should be a unit, unable to unmartal from env
 const DEFAULT_HOST = "127.0.0.1"
+
+var DEFAULT_CONFIG = DuncanConfig{
+	App: Appconfig{
+		Name: "dunan",
+		Port: DEFAULT_PORT,
+		Host: DEFAULT_HOST,
+	},
+}
 
 type Context map[string]any
 type RedisConnetion struct {
@@ -93,6 +102,7 @@ func newDuncan(config DuncanConfig) error {
 		Host: config.App.Host,
 		Port: config.App.Port,
 	}
+	duncan.initHTTPserver()
 	return nil
 }
 

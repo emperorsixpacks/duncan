@@ -1,9 +1,13 @@
 package duncan
 
+type Appconfig struct {
+	Name string `yaml:"name"`
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
 type ConnnectionConfig struct {
-	Name     string `yaml:"name"`
-	Host     string `yaml:"host"`
-	Port     string   `yaml:"port"`
+	Appconfig
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Url      string `yaml:"url"`
@@ -15,6 +19,6 @@ type Conections struct {
 }
 
 type DuncanConfig struct {
-	App         ConnnectionConfig `yaml:"app"`
-	Connections Conections        `yaml:"connections"`
+	App         Appconfig  `yaml:"app"`
+	Connections Conections `yaml:"connections"`
 }
