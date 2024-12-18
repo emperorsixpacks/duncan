@@ -10,12 +10,12 @@ var (
 	invalid_connection = duncan.RedisConnetion{
 		Addr:     "localhost:6378",
 		Password: "",
-		DB:       1,
+		DB:       "1",
 	}
 	valid_connection = duncan.RedisConnetion{
 		Addr:     "localhost:6379",
 		Password: "",
-		DB:       1,
+		DB:       "1",
 	}
 	redisClient, _ = New(valid_connection)
 	testData       = testStruct{

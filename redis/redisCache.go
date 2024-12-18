@@ -134,7 +134,7 @@ func New(conn duncan.RedisConnetion) (*RedisClient, error) {
 	options := &redis.Options{
 		Addr:     conn.Addr,
 		Password: conn.Password,
-		DB:       conn.DB,
+		DB:       conn.GetDBVal(),
 	}
 	client := redis.NewClient(options)
 	err := client.Ping(ctx).Err()

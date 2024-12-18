@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/emperorsixpacks/duncan/routers"
@@ -28,10 +29,20 @@ var DEFAULT_CONFIG = DuncanConfig{
 }
 
 type Context map[string]any
+
+// TODO move out of here
 type RedisConnetion struct {
 	Addr     string
 	Password string
 	DB       string
+}
+
+func (this *RedisConnetion) GetDBVal() int {
+	uintval, err := strconv.ParseUint(this.DB, 10, 8)
+	if err != nil {
+		panic(fmt.Errorf("Redisconnnection.DB: Could not parse string value %v to unit", this.DB))
+	}
+	return int(uintval)
 }
 
 type Duncan struct {
