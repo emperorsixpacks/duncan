@@ -1,6 +1,7 @@
 package duncan
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -14,6 +15,7 @@ import (
 var duncan *Duncan
 
 // TODO get dir name and use as default name
+// TODO we can use a default sqlite databse, so we can ceate one if none is provided in config or if as default
 const DEFAULT_PORT = "5000" // NOTE this should be a unit, unable to unmartal from env
 const DEFAULT_HOST = "127.0.0.1"
 
@@ -89,11 +91,13 @@ func FromConfig(configPath string) (*Duncan, error) {
 }
 
 func Defualt() *Duncan {
-	return &Duncan{
-		Name: "MeetUps Guru",
-		Host: DEFAULT_HOST,
-		Port: DEFAULT_PORT,
+	if duncan == nil {
+		err := newDuncan(DEFAULT_CONFIG)
+		if err != nil {
+			panic(errors.New("Could not create server"))
+		}
 	}
+  return duncan
 }
 
 func newDuncan(config DuncanConfig) error {
