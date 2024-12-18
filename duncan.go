@@ -90,14 +90,14 @@ func FromConfig(configPath string) (*Duncan, error) {
 	return duncan, nil
 }
 
-func Defualt() *Duncan {
+func New() *Duncan {
 	if duncan == nil {
 		err := newDuncan(DEFAULT_CONFIG)
 		if err != nil {
 			panic(errors.New("Could not create server"))
 		}
 	}
-  return duncan
+	return duncan
 }
 
 func newDuncan(config DuncanConfig) error {

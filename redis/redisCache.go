@@ -11,6 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var ctx = context.Background() // I do not know, should I put this in the struct
 type KeyPath interface{}
 
 func mapToStruct(i interface{}, o *interface{}) error {
@@ -37,8 +38,6 @@ func returnJSONKey(key KeyPath) (string, error) {
 	return "", errors.New(message)
 
 }
-
-var ctx = context.Background() // I do not know, should I put this in the struct
 
 // TODO look into making this a singleton
 type RedisClient struct {
