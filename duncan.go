@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emperorsixpacks/duncan/routers"
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,7 +49,7 @@ type Duncan struct {
 	Host        string
 	Port        string
 	server      *http.Server
-	router      *routers.Router
+	router      *Router
 	template    *template.Template
 	middlewares []MiddleWare
 }
@@ -74,9 +73,6 @@ func (this *Duncan) getServerAddress() string {
 	return fmt.Sprintf("%v:%v", this.Host, this.Port)
 }
 
-func (this *Duncan) AddRouter(router *routers.Router) {
-	this.router = router
-}
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
@@ -121,5 +117,6 @@ func newDuncan(config DuncanConfig) error {
 	return nil
 }
 
-// TODO do not know if it will work, but how about using factory here
 // TODO uint unmartial fail, from str port
+// Routers manages handling, routes are the routes registered in that router. so router.addRoute() will add a new route to that router.
+// This means that in router, all we need to do is just manages routing between routes. This means that the router is a tree and the routes are nodes. The router could also be an edge that is wen we create a base router or group
