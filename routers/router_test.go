@@ -1,13 +1,17 @@
 package routers
 
-var router = NewRouter()
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
-/*
-func TestAddHandler(t *testing.T) {
-	handler := func(r *http.Request) error{
-		fmt.Println("Hello world")
-    return errors.New("something went wrong")
-	}
-	router.AddHandler([]string{"GET"}, "/", handler)
-
-}*/
+func TestPath(t *testing.T) {
+	r := NewRouter("home")
+	rec := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/foo/bar", nil)
+  if err != nil{
+    t.Fatal("Error")
+  }
+  r.ServeHTTP(rec, req)
+}
