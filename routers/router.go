@@ -9,12 +9,17 @@ import (
 
 type Handler = func(http.ResponseWriter, *http.Request)
 
-func commonPrefix(str1 string, str2 string) string {
+
+func commonPrefix(str1 string, str2 string) (string, bool) {
 	var i int
-	for i := 0; str1[i] == str2[i] && i < len(str1) && i < len(str1); i++ {
+	var common string
+	for i = 0; i < len(str1) && i < len(str2) && str1[i] == str2[i]; i++ {
 		continue
 	}
-	return str1[:i]
+	if common = str1[:i]; common == "" {
+		return common, false
+	}
+	return common, true
 }
 
 func NewRouter(prefix string, router ...Router) *Router {
@@ -49,6 +54,13 @@ func (this *Router) Match() {}
 
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
+	for k, v := range this.route {
+		var common string
+		common = commonPrefix(k, path)
+		if common {
+			fmt.Println("common")
+		}
+	}
 
 }
 
