@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type Handler = func(http.ResponseWriter, *http.Request)
-
 
 func commonPrefix(str1 string, str2 string) (string, bool) {
 	var i int
@@ -24,8 +22,8 @@ func commonPrefix(str1 string, str2 string) (string, bool) {
 
 func NewRouter(prefix string, router ...Router) *Router {
 	return &Router{
-		prefix: prefix,
-		route:  make(map[string]*Route),
+		prefix:     prefix,
+		namedroute: make(map[string]*Route),
 	}
 }
 
@@ -47,26 +45,46 @@ type Route struct {
 type Router struct {
 	prefix      string
 	middlewares []string // This should be a middlewares interface
-	route       map[string]*Route
+	namedroute  map[string]*Route
+	routes      []*Route
 }
 
-func (this *Router) Match() {}
+func (this *Route) Match(path string) bool {
+	// TODO we may also need to add the params
+	if this.root && path == "/" {
+		return true
+	}
+	_, ok := commonPrefix(this.name, path)
+	if !ok {
+		fmt.Println("no common found")
+		return true
+	}
+	return false
+}
+
+func (this *Route) Name(name string) *Route {
+	this.name = name
+	// TODO add named routes
+	return this
+}
 
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+
 	path := req.URL.Path
-	for k, v := range this.route {
-		var common string
-		common = commonPrefix(k, path)
-		if common {
-			fmt.Println("common")
+	for _, route := range this.routes {
+		if route.Match(path) {
+			fmt.Println("match found")
+			break
 		}
 	}
+	fmt.Println("common")
 
 }
 
 func (this *Router) addRoute(path string, methods []string, handler Handler) {
 	// Checking if path is a valid path TODO maybe add regex to ensure correct paths are entered
-	if !strings.HasPrefix(path, "/") {
+	pathPrefix := path[0] != '/'
+	if !pathPrefix {
 		message := fmt.Sprintf("Invalid path: %v", path)
 		panic(errors.New(message))
 	}
@@ -78,9 +96,8 @@ func (this *Router) addRoute(path string, methods []string, handler Handler) {
 		handler: handler,
 		root:    isRoot,
 	}
-	this.route[path] = &route
+	this.namedroute[path] = &route
 }
 
-/*
-Duncan
-*/
+// Names are used for redirection, how do we fix duplicate names
+// If we want to redirect to a route outside the group, we ma need to look at all the nmaes in the group
