@@ -48,8 +48,8 @@ type Duncan struct {
 	Name        string
 	Host        string
 	Port        string
+	Router      *Router
 	server      *http.Server
-	router      *Router
 	template    *template.Template
 	middlewares []MiddleWare
 }
@@ -57,7 +57,6 @@ type Duncan struct {
 func (this *Duncan) Start() {
 	log.Print("Starting Duncan Server")
 	log.Print("Server has started on : ", this.getServerAddress())
-	this.initHTTPserver()
 	err := this.server.ListenAndServe()
 	if err != nil {
 		log.Fatal("could not start server : ", err)
@@ -75,7 +74,7 @@ func (this *Duncan) getServerAddress() string {
 
 func (this *Duncan) initHTTPserver() {
 	this.server = &http.Server{
-		//		Handler:      this.router.GetHandler(),
+		Handler:      this.Router,
 		Addr:         this.getServerAddress(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
