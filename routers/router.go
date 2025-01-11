@@ -1,73 +1,105 @@
 package routers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
-type Handler = func(http.ResponseWriter, *http.Request)
+type Handler string
 
+var (
+	PathParamRegex   = regexp.MustCompile(`\{([^{}]+)\}`)
+	AssignParamRegex = regexp.MustCompile(`^[^=]*=[^=]*$`)
+)
 var baseRouter *Router
 
 func GetBaseRouter() *Router {
 	if baseRouter == nil {
 		baseRouter = &Router{
-			prefix:     "/",
-			namedroute: make(map[string]*Route),
+			prefix: "/",
 		}
 	}
 	return baseRouter
 }
 
+type Param struct {
+	key   string
+	value string
+	index int
+}
+
 func SubRouter(prefix string) *Router {
-	subRouter := GetBaseRouter().subrouter(prefix)
+	subRouter := GetBaseRouter().subrouter(prefix) // TODO still working on this relationships
 	return subRouter
 }
 
-type params struct {
-	key   string
-	value string
-}
-
 type edge struct {
-	label byte
-	route *Route
+	label string
+	node  []*route
 }
 
-// NOTE leafNode
-type Route struct {
-	parent   *Router
-	path     string
-	fullPath string
-	methods  []string
-	handler  Handler
-	name     string
+type route struct {
+	// NOTE if this gets pushed, this is only for subrouters
+	label         string
+	methods       []string
+	handler       Handler
+	name          string
+	params        []Param
+	detectionPath string
+	edges         []*edge
+	isLast        bool
+
+	// NOTE END
 }
 
 // NOTE this is the base node and also a node
+// TODO we still need to add named routes
 type Router struct {
 	prefix      string
 	middlewares []string // This should be a middlewares interface
-	namedroute  map[string]*Route
-	routes      []*Route
+	routes      []*route
 }
 
-func (this *Route) match(path string) bool {
-	// TODO we may also need to add the params
-	if path == "/" {
-		return true
+/*
+	func (this Router) newEdge(label string, node []Router) {
+		newEdge := edge{
+			label: label,
+			node:  node,
+		}
+		this.edges = append(this.edges, &newEdge)
 	}
-	_, ok := commonPrefix(this.name, path)
-	if !ok {
-		fmt.Println("no common found")
-		return true
+*/
+func (this Router) getRoute(label string) (int, *route) {
+	for i, r := range this.routes {
+		if r.label == label {
+			return i, r
+		}
+	}
+	return 0, nil
+}
+
+func (this Router) delEdge(label string) {
+	newArray := make([]*route, len(this.routes))
+	edgeIndex, _ := this.getRoute(label)
+	copy(newArray, this.routes)
+	this.routes = append(newArray[:edgeIndex], newArray[edgeIndex+1:]...)
+}
+func (this *Router) Match(path string) bool {
+	common, ok := commonPrefix(this.path, path)
+	if ok {
+		if this.path == common {
+			return true
+		}
 	}
 	return false
 }
 
-func (this *Route) Name(name string) *Route {
+func (this *Router) Name(name string) *Router {
 	this.name = name
 	// TODO add named routes
 	return this
@@ -76,24 +108,67 @@ func (this *Route) Name(name string) *Route {
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	path := req.URL.Path
+	var routeMatch *Router
 	for _, route := range this.routes {
-		if route.match(path) {
-			fmt.Println("match found")
-			break
+		if route.Match(path) {
+			routeMatch = route
 		}
 	}
-	fmt.Println("common")
+	if routeMatch == nil {
+		fmt.Println("match not found")
+		return
+	}
+	if routeMatch.iswithChildren {
+		for _, route := range routeMatch.edges {
+			if route.Match(path) {
+				routeMatch = route
+			}
+		}
+	}
+	println(routeMatch.path)
+	//	routeMatch.handle(req)
 
 }
 
-func (this *Router) addRoute(path string, methods []string, handler Handler) {
-	// Checking if path is a valid path TODO maybe add regex to ensure correct paths are entered
+func (this *Router) handlerChain() {}
+
+// NOTE checking of the request methods should be in the handle function
+func (this *Router) handle(req *http.Request) {
+
+	var request Request
+	var reqBody map[string]any
+	params := make(map[string]string)
+	splitPath := strings.Split(req.URL.Path, "/")[3]
+	if !func() bool {
+		for _, method := range this.methods {
+			if method == req.Method {
+				return true
+			}
+		}
+		return false
+	}() {
+		fmt.Println("could not make request")
+		return
+	}
+	params[this.params[0]] = splitPath
+
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &reqBody)
+	if err == nil {
+		println("invalid result")
+		// TODO we need to create base handlers for request, and server errors
+		return
+	}
+	request.params = reqBody
+	// TODO pass the request to the handler function, the handler should be a reduce function
+}
+
+func (this *Router) addRoute(methods []string, path string, handler Handler) {
 	// NOTE
-	pathPrefix := path[0] != '/'
+	pathPrefix := path[0] != '/' // TODO we may not want this to fail
 	var ErrMessage string
-	if !pathPrefix {
-		ErrMessage = fmt.Sprintf("Invalid path: %v", path)
-		panic(errors.New(ErrMessage))
+	if pathPrefix {
+		path = fmt.Sprintf("/%v", path)
 	}
 	if len(methods) < 0 {
 		ErrMessage = fmt.Sprintf("HTTP methods can not be empty")
@@ -102,49 +177,74 @@ func (this *Router) addRoute(path string, methods []string, handler Handler) {
 	// NOTE abstract this part
 
 	// TODO get params  from path
-	cleanPath, _ := returnPathParams(path)
-	cleanPathstr, _ := cleanPath.(string)
+	destinationPath, pathparams := returnDestinationPath(path)
+	curr := baseRouter //TODO we still need to fix this, this could cause the program to break, what if edge is nill, and also, how do we check routes within the baserouter
+	for destinationPath != "" {
+		for _, v := range curr.edges {
+			common, ok := commonPrefix(v.label, destinationPath)
+			if ok {
+				destinationPath = destinationPath[len(common):]
+				if v.label == common {
 
-	// TODO we need to find a way to add name, here, maybe using interfaces
-	newRoute := Route{
-		path:     cleanPathstr,
-		fullPath: cleanPathstr,
-		methods:  methods,
-		handler:  handler,
-		parent:   this,
+					break
+				}
+				newRouterNode := route{
+					methods:       methods,
+					handler:       handler,
+					params:        pathparams,
+					detectionPath: destinationPath,
+					path:          path,
+				}
+				newNode := edge{
+					label: destinationPath,
+					node:  make([]Router, 9), // TODO we still need to fix this
+				}
+				newNode.node = append(newNode.node, newRouterNode)
+			}
+		}
 	}
-	this.routes = append(this.routes, &newRoute)
+	// TODO we need to find a way to add name, here, maybe using interfaces
 
+	newedge.path = fmt.Sprintf("%v%v", this.prefix, cleanPathstr)
+	this.insertEdge("label", newedge)
 }
 
 func (this *Router) addMiddleware(middlewares ...string) {
 	this.middlewares = append(this.middlewares, middlewares...)
 }
 
+// NOTE a subrouter is just like an edge on the baserouter, which is the parent tree
 func (this *Router) subrouter(prefix string) *Router {
 	new_router := &Router{
-		prefix:     prefix,
-		namedroute: make(map[string]*Route),
+		prefix: prefix,
 	}
-	/// TODO how do we create groups this.namedroute[prefix] = new_router
+	this.edges = append(this.edges, new_router)
 	return new_router
 }
 
-type Type interface {
-	string | interface{}
-}
-
-// TODO for now, this only works for only one param in a path
-func returnPathParams(path string) (interface{}, interface{}) {
-	var paramIndex [2]int
-	regex := regexp.MustCompile(`\{([^{}]+)\}`)
-	if regex.Match([]byte(path)) { // TODO look into makeing it zero memory allocation
-		matchIndex := regex.FindSubmatchIndex([]byte(path))
-		paramIndex[0] = matchIndex[0]
-		paramIndex[1] = matchIndex[len(matchIndex)-1]
-		return path[:paramIndex[0]], path[paramIndex[0]+1 : paramIndex[1]]
+// NOTE this returns all a list of int that identifes all the path params in the path
+func returnDestinationPath(regPath string) (string, []Param) {
+	var params []Param
+	var newPathItems []string
+	pathSlice := strings.Split(strings.Trim(regPath, "/"), "/")
+	for i, r := range pathSlice {
+		if PathParamRegex.Match([]byte(r)) {
+			if AssignParamRegex.Match([]byte(pathSlice[i])) {
+				params = append(params, Param{
+					key:   strings.Split(pathSlice[i], "=")[1],
+					index: i,
+				})
+				continue
+			}
+			params = append(params, Param{
+				key:   r,
+				index: i,
+			})
+			continue
+		}
+		newPathItems = append(newPathItems, r)
 	}
-	return path, nil
+	return strings.Join(newPathItems, "/"), params
 }
 
 func commonPrefix(str1 string, str2 string) (string, bool) {
@@ -164,4 +264,3 @@ func commonPrefix(str1 string, str2 string) (string, bool) {
 // Names are used for redirection, how do we fix duplicate names
 // TODO add checks to make sure the prefix is correct, we could also add dot notionts latter on, so that we can redirect to routes outside our parent router
 // If we want to redirect to a route outside the group, we ma need to look at all the nmaes in the group
-// TODO add more checks here to mkae sure valid methods are added
