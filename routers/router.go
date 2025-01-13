@@ -1,11 +1,8 @@
 package routers
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"regexp"
 	"strings"
 )
@@ -60,6 +57,7 @@ type route struct {
 // NOTE this is the base node and also a node
 // TODO we still need to add named routes
 type Router struct {
+	name        string
 	prefix      string
 	middlewares []string // This should be a middlewares interface
 	routes      []*route
@@ -89,22 +87,30 @@ func (this Router) delEdge(label string) {
 	copy(newArray, this.routes)
 	this.routes = append(newArray[:edgeIndex], newArray[edgeIndex+1:]...)
 }
-func (this *Router) Match(path string) bool {
-	common, ok := commonPrefix(this.path, path)
-	if ok {
-		if this.path == common {
-			return true
-		}
-	}
-	return false
-}
 
+/*
+	func (this *Router) Match(path string) bool {
+		common, ok := commonPrefix(this.path, path)
+		if ok {
+			if this.path == common {
+				return true
+			}
+		}
+		return false
+	}
+*/
+func (this *route) Name(name string) *route {
+	this.name = name
+	// TODO add named routes
+	return this
+}
 func (this *Router) Name(name string) *Router {
 	this.name = name
 	// TODO add named routes
 	return this
 }
 
+/*
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	path := req.URL.Path
@@ -129,9 +135,10 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//	routeMatch.handle(req)
 
 }
-
+*/
 func (this *Router) handlerChain() {}
 
+/*
 // NOTE checking of the request methods should be in the handle function
 func (this *Router) handle(req *http.Request) {
 
@@ -150,19 +157,20 @@ func (this *Router) handle(req *http.Request) {
 		fmt.Println("could not make request")
 		return
 	}
-	params[this.params[0]] = splitPath
 
-	body, _ := io.ReadAll(req.Body)
-	err := json.Unmarshal(body, &reqBody)
-	if err == nil {
-		println("invalid result")
-		// TODO we need to create base handlers for request, and server errors
-		return
+//	params[this.params[0]] = splitPath
+
+		body, _ := io.ReadAll(req.Body)
+		err := json.Unmarshal(body, &reqBody)
+		if err == nil {
+			println("invalid result")
+			// TODO we need to create base handlers for request, and server errors
+			return
+		}
+		request.params = reqBody
+		// TODO pass the request to the handler function, the handler should be a reduce function
 	}
-	request.params = reqBody
-	// TODO pass the request to the handler function, the handler should be a reduce function
-}
-
+*/
 func (this *Router) addRoute(methods []string, path string, handler Handler) {
 	// NOTE
 	pathPrefix := path[0] != '/' // TODO we may not want this to fail
@@ -207,7 +215,6 @@ func (this *Router) subrouter(prefix string) *Router {
 	new_router := &Router{
 		prefix: prefix,
 	}
-	this.edges = append(this.edges, new_router)
 	return new_router
 }
 
