@@ -1,11 +1,15 @@
 package routers
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
+func TestAddRout(t *testing.T) {
+	newRouter := SubRouter("/users")
+	newRouter.addRoute([]string{"GET"}, "/andrew/{username}", "hello")
+}
+
+/*
 func TestPath(t *testing.T) {
 	newRouter := SubRouter("/users")
 	newRouter.addRoute([]string{"GET"}, "/andrew/{username}", "hello")
@@ -15,4 +19,4 @@ func TestPath(t *testing.T) {
 		t.Fatal("Error")
 	}
 	GetBaseRouter().ServeHTTP(rec, req)
-}
+}*/

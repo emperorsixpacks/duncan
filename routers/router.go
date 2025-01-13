@@ -178,35 +178,24 @@ func (this *Router) addRoute(methods []string, path string, handler Handler) {
 
 	// TODO get params  from path
 	destinationPath, pathparams := returnDestinationPath(path)
-	curr := baseRouter //TODO we still need to fix this, this could cause the program to break, what if edge is nill, and also, how do we check routes within the baserouter
-	for destinationPath != "" {
-		for _, v := range curr.edges {
-			common, ok := commonPrefix(v.label, destinationPath)
-			if ok {
-				destinationPath = destinationPath[len(common):]
-				if v.label == common {
-
-					break
-				}
-				newRouterNode := route{
-					methods:       methods,
-					handler:       handler,
-					params:        pathparams,
-					detectionPath: destinationPath,
-					path:          path,
-				}
-				newNode := edge{
-					label: destinationPath,
-					node:  make([]Router, 9), // TODO we still need to fix this
-				}
-				newNode.node = append(newNode.node, newRouterNode)
-			}
-		}
+	newRouterNode := route{
+		methods:       methods,
+		handler:       handler,
+		params:        pathparams,
+		detectionPath: destinationPath,
 	}
+	/* newNode := edge{
+		label: destinationPath,
+		node:  make([]Router, 9), // TODO we still need to fix this
+	}
+	*/
+	this.routes = append(this.routes, &newRouterNode)
 	// TODO we need to find a way to add name, here, maybe using interfaces
 
-	newedge.path = fmt.Sprintf("%v%v", this.prefix, cleanPathstr)
-	this.insertEdge("label", newedge)
+	/*
+	   newedge.path = fmt.Sprintf("%v%v", this.prefix, cleanPathstr)
+	   this.insertEdge("label", newedge)
+	*/
 }
 
 func (this *Router) addMiddleware(middlewares ...string) {
