@@ -3,6 +3,7 @@ package routers
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -13,26 +14,18 @@ var (
 	PathParamRegex   = regexp.MustCompile(`\{([^{}]+)\}`)
 	AssignParamRegex = regexp.MustCompile(`^[^=]*=[^=]*$`)
 )
-var baseRouter *Router
 
-func GetBaseRouter() *Router {
-	if baseRouter == nil {
-		baseRouter = &Router{
-			prefix: "/",
-		}
+func New(p string) *Router {
+	newRouter := &Router{
+		prefix: p,
 	}
-	return baseRouter
+	return newRouter
 }
 
 type Param struct {
 	key   string
 	value string
 	index int
-}
-
-func SubRouter(prefix string) *Router {
-	subRouter := GetBaseRouter().subrouter(prefix) // TODO still working on this relationships
-	return subRouter
 }
 
 type edge struct {
@@ -88,17 +81,16 @@ func (this Router) delEdge(label string) {
 	this.routes = append(newArray[:edgeIndex], newArray[edgeIndex+1:]...)
 }
 
-/*
-	func (this *Router) Match(path string) bool {
-		common, ok := commonPrefix(this.path, path)
-		if ok {
-			if this.path == common {
-				return true
-			}
+func (this *route) Match(path string) bool {
+	common, ok := commonPrefix(this.detectionPath, path)
+	if ok {
+		if this.detectionPath == common {
+			return true
 		}
-		return false
 	}
-*/
+	cleanPath(path, this.params)
+	return false
+}
 func (this *route) Name(name string) *route {
 	this.name = name
 	// TODO add named routes
@@ -110,11 +102,10 @@ func (this *Router) Name(name string) *Router {
 	return this
 }
 
-/*
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	path := req.URL.Path
-	var routeMatch *Router
+	var routeMatch *route
 	for _, route := range this.routes {
 		if route.Match(path) {
 			routeMatch = route
@@ -124,18 +115,10 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("match not found")
 		return
 	}
-	if routeMatch.iswithChildren {
-		for _, route := range routeMatch.edges {
-			if route.Match(path) {
-				routeMatch = route
-			}
-		}
-	}
-	println(routeMatch.path)
+
 	//	routeMatch.handle(req)
 
 }
-*/
 func (this *Router) handlerChain() {}
 
 /*
@@ -210,14 +193,6 @@ func (this *Router) addMiddleware(middlewares ...string) {
 	this.middlewares = append(this.middlewares, middlewares...)
 }
 
-// NOTE a subrouter is just like an edge on the baserouter, which is the parent tree
-func (this *Router) subrouter(prefix string) *Router {
-	new_router := &Router{
-		prefix: prefix,
-	}
-	return new_router
-}
-
 // NOTE this returns all a list of int that identifes all the path params in the path
 func returnDestinationPath(regPath string) (string, []Param) {
 	var params []Param
@@ -241,6 +216,19 @@ func returnDestinationPath(regPath string) (string, []Param) {
 		newPathItems = append(newPathItems, r)
 	}
 	return strings.Join(newPathItems, "/"), params
+}
+
+func cleanPath(reqP string, pathParam []Param) { // (string, []Param) {
+	if len(pathParam) == 0 {
+		return //reqP, nil
+	}
+	reqPSplit := strings.Split(strings.Trim("/", reqP), "/")
+	for _, x := range pathParam {
+		// NOTE this could return an error is that index does not exist
+		x.value = reqPSplit[x.index]
+		fmt.Println(x)
+	}
+	return //reqP, nil
 }
 
 func commonPrefix(str1 string, str2 string) (string, bool) {
