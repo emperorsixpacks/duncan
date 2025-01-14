@@ -24,6 +24,22 @@ type route struct {
 	// NOTE END
 }
 
+func (this *route) Name(name string) *route {
+	this.name = name
+	// TODO add named routes
+	return this
+}
+func (this *route) Match(path string) bool {
+	common, ok := commonPrefix(this.detectionPath, path) // TODO I may need to remove this latter
+	if ok {
+		if this.detectionPath == common {
+			return true
+		}
+	}
+	//	cleanPath(path, this.params)
+	return false
+}
+
 // NOTE checking of the request methods should be in the handle function
 func (this *route) handle(req *http.Request) {
 
