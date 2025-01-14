@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 type Handler string
@@ -31,16 +30,14 @@ type Router struct {
 	routes      []*route
 }
 
-
-func (this *Router) Match(path string) bool {
-	common, ok := commonPrefix(this.detectionPath, path) // TODO I may need to remove this latter
-	if ok {
-		if this.detectionPath == common {
-			return true
+// TODO we need to handle route method mismatch and route not found errors
+func (this *Router) Match(req *http.Request) (*route, bool) {
+	for _, route := range this.routes {
+		if route.Match(req) {
+      return route, true
 		}
 	}
-	//	cleanPath(path, this.params)
-	return false
+	return nil, false
 }
 
 func (this *Router) Name(name string) *Router {

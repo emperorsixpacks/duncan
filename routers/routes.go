@@ -29,7 +29,7 @@ func (this *route) Name(name string) *route {
 	// TODO add named routes
 	return this
 }
-func (this *route) Match(path string) bool {
+func (this *route) Match(req *http.Request) bool {
 	common, ok := commonPrefix(this.detectionPath, path) // TODO I may need to remove this latter
 	if ok {
 		if this.detectionPath == common {
