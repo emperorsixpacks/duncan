@@ -8,14 +8,14 @@ import (
 
 func TestAddRout(t *testing.T) {
 	newRouter := New("SubRouter/users")
-	newRouter.addRoute([]string{"GET"}, "/andrew/{username}", "hello")
+	newRouter.addRoute([]string{"GET"}, "/andrew/{username}", "hello", "users")
 }
 
 func TestPath(t *testing.T) {
 	newRouter := New("/users")
-	newRouter.addRoute([]string{"GET"}, "/andrew/{username}", "hello")
+	newRouter.addRoute([]string{"GET"}, "/andrew/{username}/post/{id}", "hello", "users")
 	rec := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/users/andrew/emperorsixpacks/hello", nil)
+	req, err := http.NewRequest("GET", "/users/andrew/emperorsixpacks", nil)
 	if err != nil {
 		t.Fatal("Error")
 	}

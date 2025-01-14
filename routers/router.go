@@ -22,31 +22,6 @@ func New(p string) *Router {
 	return newRouter
 }
 
-type Param struct {
-	key   string
-	value string
-	index int
-}
-
-type edge struct {
-	label string
-	node  []*route
-}
-
-type route struct {
-	// NOTE if this gets pushed, this is only for subrouters
-	label         string
-	methods       []string
-	handler       Handler
-	name          string
-	params        []Param
-	detectionPath string
-	edges         []*edge
-	isLast        bool
-
-	// NOTE END
-}
-
 // NOTE this is the base node and also a node
 // TODO we still need to add named routes
 type Router struct {
@@ -56,39 +31,14 @@ type Router struct {
 	routes      []*route
 }
 
-/*
-	func (this Router) newEdge(label string, node []Router) {
-		newEdge := edge{
-			label: label,
-			node:  node,
-		}
-		this.edges = append(this.edges, &newEdge)
-	}
-*/
-func (this Router) getRoute(label string) (int, *route) {
-	for i, r := range this.routes {
-		if r.label == label {
-			return i, r
-		}
-	}
-	return 0, nil
-}
-
-func (this Router) delEdge(label string) {
-	newArray := make([]*route, len(this.routes))
-	edgeIndex, _ := this.getRoute(label)
-	copy(newArray, this.routes)
-	this.routes = append(newArray[:edgeIndex], newArray[edgeIndex+1:]...)
-}
-
 func (this *route) Match(path string) bool {
-	common, ok := commonPrefix(this.detectionPath, path)
+	common, ok := commonPrefix(this.detectionPath, path) // TODO I may need to remove this latter
 	if ok {
 		if this.detectionPath == common {
 			return true
 		}
 	}
-	cleanPath(path, this.params)
+	//	cleanPath(path, this.params)
 	return false
 }
 func (this *route) Name(name string) *route {
@@ -103,7 +53,6 @@ func (this *Router) Name(name string) *Router {
 }
 
 func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-
 	path := req.URL.Path
 	var routeMatch *route
 	for _, route := range this.routes {
@@ -121,40 +70,7 @@ func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 func (this *Router) handlerChain() {}
 
-/*
-// NOTE checking of the request methods should be in the handle function
-func (this *Router) handle(req *http.Request) {
-
-	var request Request
-	var reqBody map[string]any
-	params := make(map[string]string)
-	splitPath := strings.Split(req.URL.Path, "/")[3]
-	if !func() bool {
-		for _, method := range this.methods {
-			if method == req.Method {
-				return true
-			}
-		}
-		return false
-	}() {
-		fmt.Println("could not make request")
-		return
-	}
-
-//	params[this.params[0]] = splitPath
-
-		body, _ := io.ReadAll(req.Body)
-		err := json.Unmarshal(body, &reqBody)
-		if err == nil {
-			println("invalid result")
-			// TODO we need to create base handlers for request, and server errors
-			return
-		}
-		request.params = reqBody
-		// TODO pass the request to the handler function, the handler should be a reduce function
-	}
-*/
-func (this *Router) addRoute(methods []string, path string, handler Handler) {
+func (this *Router) addRoute(methods []string, path string, handler Handler, name string) {
 	// NOTE
 	pathPrefix := path[0] != '/' // TODO we may not want this to fail
 	var ErrMessage string
@@ -169,24 +85,18 @@ func (this *Router) addRoute(methods []string, path string, handler Handler) {
 
 	// TODO get params  from path
 	destinationPath, pathparams := returnDestinationPath(path)
+	destinationPath = fmt.Sprintf("%v/%v", this.prefix, destinationPath)
 	newRouterNode := route{
+		parent:        this,
 		methods:       methods,
 		handler:       handler,
 		params:        pathparams,
+		name:          name,
 		detectionPath: destinationPath,
 	}
-	/* newNode := edge{
-		label: destinationPath,
-		node:  make([]Router, 9), // TODO we still need to fix this
-	}
-	*/
-	this.routes = append(this.routes, &newRouterNode)
-	// TODO we need to find a way to add name, here, maybe using interfaces
 
-	/*
-	   newedge.path = fmt.Sprintf("%v%v", this.prefix, cleanPathstr)
-	   this.insertEdge("label", newedge)
-	*/
+	this.routes = append(this.routes, &newRouterNode)
+
 }
 
 func (this *Router) addMiddleware(middlewares ...string) {
@@ -218,19 +128,23 @@ func returnDestinationPath(regPath string) (string, []Param) {
 	return strings.Join(newPathItems, "/"), params
 }
 
-func cleanPath(reqP string, pathParam []Param) { // (string, []Param) {
-	if len(pathParam) == 0 {
+/*
+	func cleanPath(rp string, pathParam []Param) (map[string]interface{}, error) {
+		returnMap := make(map[string]interface{})
+		if len(pathParam) == 0 {
+			returnMap["path"] = rp
+			returnMap["params"] = nil
+			return returnMap, nil
+		}
+		//	reqPSplit := strings.Split(strings.Trim("/", reqP), "/")
+		for _, x := range pathParam {
+			// NOTE this could return an error is that index does not exist
+			//		x.value = reqPSplit[x.index]
+			fmt.Println(x)
+		}
 		return //reqP, nil
 	}
-	reqPSplit := strings.Split(strings.Trim("/", reqP), "/")
-	for _, x := range pathParam {
-		// NOTE this could return an error is that index does not exist
-		x.value = reqPSplit[x.index]
-		fmt.Println(x)
-	}
-	return //reqP, nil
-}
-
+*/
 func commonPrefix(str1 string, str2 string) (string, bool) {
 	var i int
 	max_ := min(len(str1), len(str2))
@@ -248,3 +162,4 @@ func commonPrefix(str1 string, str2 string) (string, bool) {
 // Names are used for redirection, how do we fix duplicate names
 // TODO add checks to make sure the prefix is correct, we could also add dot notionts latter on, so that we can redirect to routes outside our parent router
 // If we want to redirect to a route outside the group, we ma need to look at all the nmaes in the group
+// TODO prevent identical route registration
