@@ -1,70 +1,93 @@
 package routers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 )
-
-type Handler string
 
 var (
 	PathParamRegex   = regexp.MustCompile(`\{([^{}]+)\}`)
 	AssignParamRegex = regexp.MustCompile(`^[^=]*=[^=]*$`)
 )
 
+type Handler string
+
 func New(p string) *Router {
-	newRouter := &Router{
-		prefix: p,
-	}
-	return newRouter
+	return &Router{}
 }
 
-// NOTE this is the base node and also a node
-// TODO we still need to add named routes
+type Param struct {
+	key   string
+	value string
+}
+
+type params []Param
+
+func (p *params) get() {}
+
+func (p *params) update() {}
+
 type Router struct {
-	name        string
-	prefix      string
-	middlewares []string // This should be a middlewares interface
-	routes      []*route
+	// NOTE if this gets pushed, this is only for subrouters
+	handler       Handler
+	name          string
+	detectionPath string
+	methods       []string
+	params        []Param
+
+	// NOTE END
 }
 
-// TODO we need to handle route method mismatch and route not found errors
-func (this *Router) Match(req *http.Request) (*route, bool) {
-	for _, route := range this.routes {
-		if route.Match(req) {
-      return route, true
-		}
-	}
-	return nil, false
-}
-
-func (this *Router) Name(name string) *Router {
+func (this *route) Name(name string) *route {
 	this.name = name
 	// TODO add named routes
 	return this
 }
-
-func (this *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	path := req.URL.Path
-	var routeMatch *route
-	for _, route := range this.routes {
-		if route.Match(path) {
-			routeMatch = route
+func (this *route) Match(req *http.Request) bool {
+	common, ok := commonPrefix(this.detectionPath, path) // TODO I may need to remove this latter
+	if ok {
+		if this.detectionPath == common {
+			return true
 		}
 	}
-	if routeMatch == nil {
-		fmt.Println("match not found")
+	//	cleanPath(path, this.params)
+	return false
+}
+
+// NOTE checking of the request methods should be in the handle function
+func (this *route) handle(req *http.Request) {
+
+	var request Request
+	var reqBody map[string]any
+	if !func() bool {
+		for _, method := range this.methods {
+			if method == req.Method {
+				return true
+			}
+		}
+		return false
+	}() {
+		fmt.Println("could not make request")
 		return
 	}
 
-	//	routeMatch.handle(req)
+	//	params[this.params[0]] = splitPath
 
+	body, _ := io.ReadAll(req.Body)
+	err := json.Unmarshal(body, &reqBody)
+	if err == nil {
+		println("invalid result")
+		// TODO we need to create base handlers for request, and server errors
+		return
+	}
+	request.params = reqBody
+	// TODO pass the request to the handler function, the handler should be a reduce function
 }
-func (this *Router) handlerChain() {}
-
-func (this *Router) addRoute(methods []string, path string, handler Handler, name string) {
+func (this *route) addRoute(methods []string, path string, handler Handler, name string) {
 	// NOTE
 	pathPrefix := path[0] != '/' // TODO we may not want this to fail
 	var ErrMessage string
@@ -81,7 +104,6 @@ func (this *Router) addRoute(methods []string, path string, handler Handler, nam
 	destinationPath, pathparams := returnDestinationPath(path)
 	destinationPath = fmt.Sprintf("%v/%v", this.prefix, destinationPath)
 	newRouterNode := route{
-		parent:        this,
 		methods:       methods,
 		handler:       handler,
 		params:        pathparams,
@@ -93,13 +115,6 @@ func (this *Router) addRoute(methods []string, path string, handler Handler, nam
 
 }
 
-func (this *Router) addMiddleware(middlewares ...string) {
+func (this *route) addMiddleware(middlewares ...string) {
 	this.middlewares = append(this.middlewares, middlewares...)
 }
-
-// we need the absolutepath, currently, the prefix is just the relative path
-// Names are used for redirection, how do we fix duplicate names
-// TODO add checks to make sure the prefix is correct, we could also add dot notionts latter on, so that we can redirect to routes outside our parent router
-// If we want to redirect to a route outside the group, we ma need to look at all the nmaes in the group
-// TODO prevent identical route registration
-// TODO write a simple interface for a middleware

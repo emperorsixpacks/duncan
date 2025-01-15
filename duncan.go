@@ -114,8 +114,3 @@ func newDuncan(config DuncanConfig) error {
 	duncan.initHTTPserver()
 	return nil
 }
-
-// You know, factory can be used here
-// TODO uint unmartial fail, from str port
-// Routers manages handling, routes are the routes registered in that router. so router.addRoute() will add a new route to that router.
-// This means that in router, all we need to do is just manages routing between routes. This means that the router is a tree and the routes are nodes. The router could also be an edge that is wen we create a base router or group
